@@ -9,7 +9,7 @@ repository = "https://github.com/imartayan/minimizer-queue"
 homepage = "https://crates.io/crates/minimizer-queue"
 documentation = "https://docs.rs/minimizer-queue"
 license = "MIT"
-keywords = ["hashmap", "multimap", "flat"]
+keywords = ["minimizer", "queue", "monotone", "hash"]
 categories = ["data-structures"]
 edition = "2021"
 
