@@ -58,7 +58,6 @@ impl<T: Hash + Copy, S: BuildHasher> MinimizerQueue<T, S> {
     }
 
     pub fn insert_with_hash(&mut self, x: T, hash: u64) {
-        dbg!(hash);
         if !self.deq.is_empty() && self.deq[0].2 == self.pos {
             self.deq.pop_front();
         }
