@@ -17,6 +17,14 @@ Fast computation of minimizers using a monotone queue.
 ## Example usage
 
 ```rust
-use minimizer_queue::MinimizerQueue
+use minimizer_queue::MinimizerQueue;
 
+let mut queue = MinimizerQueue::new(3); // width 3
+queue.insert(1);
+queue.insert(2);
+queue.insert(3);
+queue.get_min(); // element with the smallest hash among 1, 2 and 3
+
+queue.insert(4);
+queue.get_min(); // element with the smallest hash among 2, 3 and 4
 ```
