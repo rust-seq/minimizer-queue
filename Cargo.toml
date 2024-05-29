@@ -1,0 +1,21 @@
+[package]
+name = "minimizer-queue"
+version = "1.0.0"
+authors = ["Igor Martayan <imartayan@users.noreply.github.com>"]
+description = "Fast computation of minimizers using a monotone queue"
+readme = "README.md"
+exclude = [".github/**", ".gitignore"]
+repository = "https://github.com/imartayan/minimizer-queue"
+homepage = "https://crates.io/crates/minimizer-queue"
+documentation = "https://docs.rs/minimizer-queue"
+license = "MIT"
+keywords = ["hashmap", "multimap", "flat"]
+categories = ["data-structures"]
+edition = "2021"
+
+[dependencies]
+ahash = { version = "0.8", default-features = false, features = ["no-rng"] }
+strength_reduce = "0.2"
+
+[dev-dependencies]
+nohash-hasher = "0.2"
