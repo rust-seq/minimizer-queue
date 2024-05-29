@@ -3,6 +3,22 @@ use core::hash::{BuildHasher, Hash};
 use std::collections::VecDeque;
 use strength_reduce::StrengthReducedU16;
 
+/// A monotone queue that can compute consecutive minimizers in constant time
+///
+/// # Examples
+///
+/// ```
+/// use minimizer_queue::MinimizerQueue;
+///
+/// let mut queue = MinimizerQueue::new(3); // width 3
+/// queue.insert(1);
+/// queue.insert(2);
+/// queue.insert(3);
+/// queue.get_min(); // element with the smallest hash among 1, 2 and 3
+///
+/// queue.insert(4);
+/// queue.get_min(); // element with the smallest hash among 2, 3 and 4
+/// ```
 pub struct MinimizerQueue<T: Hash + Copy, S: BuildHasher = RandomState> {
     deq: VecDeque<(T, u64, u16)>,
     width: StrengthReducedU16,
@@ -11,39 +27,46 @@ pub struct MinimizerQueue<T: Hash + Copy, S: BuildHasher = RandomState> {
 }
 
 impl<T: Hash + Copy> MinimizerQueue<T> {
+    /// Creates an empty `MinimizerQueue` with the given width.
     #[inline]
-    pub fn new(width: usize) -> Self {
-        Self::with_seed(width, width)
+    pub fn new(width: u16) -> Self {
+        Self::with_seed(width, width as usize)
     }
 
+    /// Creates an empty `MinimizerQueue` with the given width and seed.
+    /// Changing the seed will change the ordering of the minimizers.
     #[inline]
-    pub fn with_seed(width: usize, seed: usize) -> Self {
+    pub fn with_seed(width: u16, seed: usize) -> Self {
         Self::with_hasher(width, RandomState::with_seed(seed))
     }
 }
 
 impl<T: Hash + Copy, S: BuildHasher> MinimizerQueue<T, S> {
-    pub fn with_hasher(width: usize, hash_builder: S) -> Self {
-        debug_assert!(width <= u16::MAX as usize, "Width must fit in a u16");
+    /// Creates an empty `MinimizerQueue` with the given width and hasher.
+    /// The hasher will define the ordering of the minimizers, based on their hashes.
+    pub fn with_hasher(width: u16, hash_builder: S) -> Self {
         Self {
-            deq: VecDeque::with_capacity(width),
-            width: StrengthReducedU16::new(width as u16),
+            deq: VecDeque::with_capacity(width as usize),
+            width: StrengthReducedU16::new(width),
             hash_builder,
             pos: 0,
         }
     }
 
+    /// Returns the width of the `MinimizerQueue`.
     #[inline]
     pub fn width(&self) -> usize {
         self.width.get() as usize
     }
 
+    /// Returns the current minimizer.
     #[inline]
     pub fn get_min(&self) -> T {
         debug_assert!(!self.deq.is_empty(), "MinimizerQueue is empty");
         self.deq[0].0
     }
 
+    /// Returns the current minimizer and its relative position in the queue.
     #[inline]
     pub fn get_min_pos(&self) -> (T, usize) {
         debug_assert!(!self.deq.is_empty(), "MinimizerQueue is empty");
@@ -52,11 +75,13 @@ impl<T: Hash + Copy, S: BuildHasher> MinimizerQueue<T, S> {
         (x, rel_pos)
     }
 
+    /// Inserts `x` in the queue and updates the current minimizer.
     #[inline]
     pub fn insert(&mut self, x: T) {
         self.insert_with_hash(x, self.hash_builder.hash_one(x))
     }
 
+    /// Inserts `x` in the queue with the given hash and updates the current minimizer.
     pub fn insert_with_hash(&mut self, x: T, hash: u64) {
         if !self.deq.is_empty() && self.deq[0].2 == self.pos {
             self.deq.pop_front();
@@ -78,16 +103,15 @@ mod tests {
 
     #[test]
     fn test_get_min() {
-        let width = 3;
-        let mut queue = MinimizerQueue::with_hasher(width, BuildNoHashHasher::<usize>::default());
+        let mut queue = MinimizerQueue::with_hasher(3, BuildNoHashHasher::<usize>::default());
 
         let vals = [1usize, 2, 3, 0, 7, 8, 9, 100, 3, 4, 7, 8];
-        let mut mins = Vec::with_capacity(vals.len() - width + 1);
+        let mut mins = Vec::with_capacity(vals.len() - queue.width() + 1);
 
-        for &val in vals.iter().take(width - 1) {
+        for &val in vals.iter().take(queue.width() - 1) {
             queue.insert(val);
         }
-        for &val in vals.iter().skip(width - 1) {
+        for &val in vals.iter().skip(queue.width() - 1) {
             queue.insert(val);
             mins.push(queue.get_min());
         }
@@ -97,16 +121,15 @@ mod tests {
 
     #[test]
     fn test_get_min_pos() {
-        let width = 3;
-        let mut queue = MinimizerQueue::with_hasher(width, BuildNoHashHasher::<usize>::default());
+        let mut queue = MinimizerQueue::with_hasher(3, BuildNoHashHasher::<usize>::default());
 
         let vals = [1usize, 2, 3, 0, 7, 8, 9, 100, 3, 4, 7, 8];
-        let mut mins_pos = Vec::with_capacity(vals.len() - width + 1);
+        let mut mins_pos = Vec::with_capacity(vals.len() - queue.width() + 1);
 
-        for &val in vals.iter().take(width - 1) {
+        for &val in vals.iter().take(queue.width() - 1) {
             queue.insert(val);
         }
-        for &val in vals.iter().skip(width - 1) {
+        for &val in vals.iter().skip(queue.width() - 1) {
             queue.insert(val);
             mins_pos.push(queue.get_min_pos());
         }
