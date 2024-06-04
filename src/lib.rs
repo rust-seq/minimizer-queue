@@ -168,7 +168,7 @@ impl<S: BuildHasher> ImplicitMinimizerQueue<S> {
 
     /// Inserts `x` in the queue and updates the current minimizer.
     #[inline]
-    pub fn insert<T: Hash>(&mut self, x: T) {
+    pub fn insert<T: Hash>(&mut self, x: &T) {
         self.insert_hash(self.hash_builder.hash_one(x))
     }
 
@@ -256,10 +256,10 @@ mod tests {
         let vals = [1usize, 2, 3, 0, 7, 8, 9, 100, 3, 4, 7, 8];
         let mut mins_pos = Vec::with_capacity(vals.len() - queue.width() + 1);
 
-        for &val in vals.iter().take(queue.width() - 1) {
+        for val in vals.iter().take(queue.width() - 1) {
             queue.insert(val);
         }
-        for &val in vals.iter().skip(queue.width() - 1) {
+        for val in vals.iter().skip(queue.width() - 1) {
             queue.insert(val);
             mins_pos.push(queue.get_min_pos());
         }
