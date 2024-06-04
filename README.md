@@ -10,9 +10,9 @@ Fast computation of minimizers using a monotone queue.
 - insertion in amortized constant time
 - lookup in constant time
 - keeps track of the relative position of the minimizers
-- supports custom [hasher](https://doc.rust-lang.org/stable/core/hash/trait.BuildHasher.html), using [`aHash`](https://github.com/tkaitchuck/aHash) by default
+- supports custom [hasher](https://doc.rust-lang.org/stable/core/hash/trait.BuildHasher.html), using [wyhash](https://github.com/JackThomson2/wyhash2) by default
 - can be seeded to produce a different ordering
-- optimized modulo computation with [`strength_reduce`](https://github.com/ejmahler/strength_reduce)
+- optimized modulo computation with [strength_reduce](https://github.com/ejmahler/strength_reduce)
 
 ## Example usage
 
