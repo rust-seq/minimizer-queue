@@ -94,6 +94,12 @@ impl<T: Hash + Copy, S: BuildHasher> MinimizerQueue<T, S> {
         self.deq.push_back((x, hash, self.pos));
         self.pos = (self.pos + 1) % self.width;
     }
+
+    /// Clears the deque, removing all elements.
+    #[inline]
+    pub fn clear(&mut self) {
+        self.deq.clear()
+    }
 }
 
 #[cfg(test)]
