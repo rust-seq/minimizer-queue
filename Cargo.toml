@@ -1,6 +1,6 @@
 [package]
 name = "minimizer-queue"
-version = "1.0.0"
+version = "1.1.0"
 authors = ["Igor Martayan <imartayan@users.noreply.github.com>"]
 description = "Fast computation of minimizers using a monotone queue"
 readme = "README.md"
