@@ -110,12 +110,12 @@ impl<T: Hash + Copy, S: BuildHasher> MinimizerQueue<T, S> {
 /// use minimizer_queue::ImplicitMinimizerQueue;
 ///
 /// let mut queue = ImplicitMinimizerQueue::new(3); // width 3
-/// queue.insert(1);
-/// queue.insert(2);
-/// queue.insert(3);
+/// queue.insert(&1);
+/// queue.insert(&2);
+/// queue.insert(&3);
 /// queue.get_min_pos(); // position of the element with the smallest hash among 1, 2 and 3
 ///
-/// queue.insert(4);
+/// queue.insert(&4);
 /// queue.get_min_pos(); // position of the element with the smallest hash among 2, 3 and 4
 /// ```
 pub struct ImplicitMinimizerQueue<S: BuildHasher = RandomState> {
