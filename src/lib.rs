@@ -1,7 +1,9 @@
 use core::hash::{BuildHasher, Hash};
 use std::collections::VecDeque;
 use strength_reduce::StrengthReducedU16;
-use wyhash2::WyHash as DefaultBuildHasher;
+
+/// Default hasher for [`MinimizerQueue`] and [`ImplicitMinimizerQueue`].
+pub type DefaultHashBuilder = wyhash2::WyHash;
 
 /// A monotone queue that can compute consecutive minimizers in constant time.
 ///
@@ -19,7 +21,7 @@ use wyhash2::WyHash as DefaultBuildHasher;
 /// queue.insert(4);
 /// queue.get_min(); // element with the smallest hash among 2, 3 and 4
 /// ```
-pub struct MinimizerQueue<T: Hash + Copy, S: BuildHasher = DefaultBuildHasher> {
+pub struct MinimizerQueue<T: Hash + Copy, S: BuildHasher = DefaultHashBuilder> {
     deq: VecDeque<(T, u64, u16)>,
     width: StrengthReducedU16,
     hash_builder: S,
@@ -37,7 +39,7 @@ impl<T: Hash + Copy> MinimizerQueue<T> {
     /// Changing the seed will change the ordering of the minimizers.
     #[inline]
     pub fn with_seed(width: u16, seed: u64) -> Self {
-        Self::with_hasher(width, DefaultBuildHasher::with_seed(seed))
+        Self::with_hasher(width, DefaultHashBuilder::with_seed(seed))
     }
 }
 
@@ -118,7 +120,7 @@ impl<T: Hash + Copy, S: BuildHasher> MinimizerQueue<T, S> {
 /// queue.insert(&4);
 /// queue.get_min_pos(); // position of the element with the smallest hash among 2, 3 and 4
 /// ```
-pub struct ImplicitMinimizerQueue<S: BuildHasher = DefaultBuildHasher> {
+pub struct ImplicitMinimizerQueue<S: BuildHasher = DefaultHashBuilder> {
     deq: VecDeque<(u64, u16)>,
     width: StrengthReducedU16,
     hash_builder: S,
@@ -136,7 +138,7 @@ impl ImplicitMinimizerQueue {
     /// Changing the seed will change the ordering of the minimizers.
     #[inline]
     pub fn with_seed(width: u16, seed: u64) -> Self {
-        Self::with_hasher(width, DefaultBuildHasher::with_seed(seed))
+        Self::with_hasher(width, DefaultHashBuilder::with_seed(seed))
     }
 }
 
