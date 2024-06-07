@@ -61,6 +61,12 @@ impl<T: Hash + Copy, S: BuildHasher> MinimizerQueue<T, S> {
         self.width.get() as usize
     }
 
+    /// Returns `true` if the `MinimizerQueue` is empty.
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        self.deq.is_empty()
+    }
+
     /// Returns the current minimizer.
     #[inline]
     pub fn get_min(&self) -> T {
@@ -158,6 +164,12 @@ impl<S: BuildHasher> ImplicitMinimizerQueue<S> {
     #[inline]
     pub fn width(&self) -> usize {
         self.width.get() as usize
+    }
+
+    /// Returns `true` if the `ImplicitMinimizerQueue` is empty.
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        self.deq.is_empty()
     }
 
     /// Returns the relative position of the current minimizer.
