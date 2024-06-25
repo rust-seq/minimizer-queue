@@ -1,3 +1,4 @@
+use core::cmp::Ordering;
 use core::hash::{BuildHasher, Hash};
 use std::collections::VecDeque;
 use strength_reduce::StrengthReducedU16;
@@ -67,20 +68,51 @@ impl<T: Hash + Copy, S: BuildHasher> MinimizerQueue<T, S> {
         self.deq.is_empty()
     }
 
-    /// Returns the current minimizer.
+    /// Returns `true` if there are multiple minimizers in the queue.
+    #[inline]
+    pub fn multiple_mins(&self) -> bool {
+        self.deq.len() >= 2 && self.deq[0].1 == self.deq[1].1
+    }
+
+    /// Returns the leftmost minimizer in the queue.
     #[inline]
     pub fn get_min(&self) -> T {
         debug_assert!(!self.deq.is_empty(), "MinimizerQueue is empty");
         self.deq[0].0
     }
 
-    /// Returns the current minimizer and its relative position in the queue.
+    /// Returns the leftmost minimizer and its relative position in the queue.
     #[inline]
     pub fn get_min_pos(&self) -> (T, usize) {
         debug_assert!(!self.deq.is_empty(), "MinimizerQueue is empty");
         let (x, _, pos) = self.deq[0];
         let rel_pos = ((self.width.get() - self.pos + pos) % self.width) as usize;
         (x, rel_pos)
+    }
+
+    /// Returns the innermost minimizer and its relative position in the queue, with a second choice in case of tie.
+    #[inline]
+    pub fn get_inner_min_pos(&self) -> (T, usize, Option<(T, usize)>) {
+        debug_assert!(!self.deq.is_empty(), "MinimizerQueue is empty");
+        let width = self.width.get();
+        let start = width - self.pos;
+        let (mut x, hash, x_pos) = self.deq[0];
+        let mut x_pos = (start + x_pos) % self.width;
+        let mut i = 1;
+        while i < self.deq.len() && self.deq[i].1 == hash {
+            let (y, _, y_pos) = self.deq[i];
+            let y_pos = (start + y_pos) % self.width;
+            match x_pos.cmp(&(width - 1 - y_pos)) {
+                Ordering::Less => {
+                    x = y;
+                    x_pos = y_pos;
+                }
+                Ordering::Equal => return (x, x_pos as usize, Some((y, y_pos as usize))),
+                Ordering::Greater => return (x, x_pos as usize, None),
+            }
+            i += 1;
+        }
+        (x, x_pos as usize, None)
     }
 
     /// Inserts `x` in the queue and updates the current minimizer.
@@ -172,12 +204,42 @@ impl<S: BuildHasher> ImplicitMinimizerQueue<S> {
         self.deq.is_empty()
     }
 
-    /// Returns the relative position of the current minimizer.
+    /// Returns `true` if there are multiple minimizers in the queue.
+    #[inline]
+    pub fn multiple_mins(&self) -> bool {
+        self.deq.len() >= 2 && self.deq[0].0 == self.deq[1].0
+    }
+
+    /// Returns the relative position of the leftmost minimizer.
     #[inline]
     pub fn get_min_pos(&self) -> usize {
         debug_assert!(!self.deq.is_empty(), "ImplicitMinimizerQueue is empty");
         let (_, pos) = self.deq[0];
         ((self.width.get() - self.pos + pos) % self.width) as usize
+    }
+
+    /// Returns the relative position of the innermost minimizer, with a second choice in case of tie.
+    #[inline]
+    pub fn get_inner_min_pos(&self) -> (usize, Option<usize>) {
+        debug_assert!(!self.deq.is_empty(), "MinimizerQueue is empty");
+        let width = self.width.get();
+        let start = width - self.pos;
+        let (hash, x_pos) = self.deq[0];
+        let mut x_pos = (start + x_pos) % self.width;
+        let mut i = 1;
+        while i < self.deq.len() && self.deq[i].0 == hash {
+            let (_, y_pos) = self.deq[i];
+            let y_pos = (start + y_pos) % self.width;
+            match x_pos.cmp(&(width - 1 - y_pos)) {
+                Ordering::Less => {
+                    x_pos = y_pos;
+                }
+                Ordering::Equal => return (x_pos as usize, Some(y_pos as usize)),
+                Ordering::Greater => return (x_pos as usize, None),
+            }
+            i += 1;
+        }
+        (x_pos as usize, None)
     }
 
     /// Inserts `x` in the queue and updates the current minimizer.
@@ -279,5 +341,54 @@ mod tests {
         }
 
         assert_eq!(mins_pos, vec![0, 2, 1, 0, 0, 0, 2, 1, 0, 0]);
+    }
+
+    #[test]
+    fn test_get_inner_min_pos() {
+        let mut queue = MinimizerQueue::with_hasher(3, BuildNoHashHasher::<usize>::default());
+
+        let vals = [1usize, 2, 3, 2, 2, 3, 1];
+        let mut inner_mins_pos = Vec::with_capacity(vals.len() - queue.width() + 1);
+
+        for &val in vals.iter().take(queue.width() - 1) {
+            queue.insert(val);
+        }
+        for &val in vals.iter().skip(queue.width() - 1) {
+            queue.insert(val);
+            inner_mins_pos.push(queue.get_inner_min_pos());
+        }
+
+        assert_eq!(
+            inner_mins_pos,
+            vec![
+                (1, 0, None),
+                (2, 0, Some((2, 2))),
+                (2, 1, None),
+                (2, 1, None),
+                (1, 2, None),
+            ]
+        );
+    }
+
+    #[test]
+    fn test_implicit_get_inner_min_pos() {
+        let mut queue =
+            ImplicitMinimizerQueue::with_hasher(3, BuildNoHashHasher::<usize>::default());
+
+        let vals = [1usize, 2, 3, 2, 2, 3, 1];
+        let mut inner_mins_pos = Vec::with_capacity(vals.len() - queue.width() + 1);
+
+        for val in vals.iter().take(queue.width() - 1) {
+            queue.insert(val);
+        }
+        for val in vals.iter().skip(queue.width() - 1) {
+            queue.insert(val);
+            inner_mins_pos.push(queue.get_inner_min_pos());
+        }
+
+        assert_eq!(
+            inner_mins_pos,
+            vec![(0, None), (0, Some(2)), (1, None), (1, None), (2, None),]
+        );
     }
 }
