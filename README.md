@@ -28,3 +28,7 @@ queue.get_min(); // element with the smallest hash among 1, 2 and 3
 queue.insert(4);
 queue.get_min(); // element with the smallest hash among 2, 3 and 4
 ```
+
+## Contributors
+
+- [Igor Martayan](https://github.com/imartayan) (main developer)
